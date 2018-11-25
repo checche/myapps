@@ -1,0 +1,39 @@
+{% extends 'livecalendar/base.html' %}
+
+{% block content %}
+<table class="table mt-5">
+  <thead class="thead-light">
+    <tr>
+      <th>日程</th>
+      <th>ライブハウス</th>
+      <th>イベント名</th>
+      <th>出演バンド</th>
+      <th>OPEN</th>
+      <th>START</th>
+      <th>当日</th>
+      <th>前売り</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for live in live_list %}
+    <tr>
+      <td>{{ live.date }}</td>
+      <td>{{ live.place }}</td>
+      <td>{{ live.title }}</td>
+      <td>
+        {% for band in live.band.all %}
+        {{ band }}
+        {% if forloop.last is False %} / {% endif %}
+        {% endfor %}</td>
+      <td>{{ live.open }}</td>
+      <td>{{ live.start }}</td>
+      <td>{{ live.door }}</td>
+      <td>{{ live.adv }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% include 'livecalendar/page.html' %}
+
+{% endblock %}
