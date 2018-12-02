@@ -1,38 +1,50 @@
 {% extends 'livecalendar/base.html' %}
 
 {% block content %}
-<table class="table mt-5">
-  <thead class="thead-light">
-    <tr>
-      <th>日程</th>
-      <th>ライブハウス</th>
-      <th>イベント名</th>
-      <th>出演バンド</th>
-      <th>OPEN</th>
-      <th>START</th>
-      <th>当日</th>
-      <th>前売り</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for live in live_list %}
-    <tr>
-      <td>{{ live.date }}</td>
-      <td>{{ live.place }}</td>
-      <td>{{ live.title }}</td>
-      <td>
-        {% for band in live.band.all %}
-        {{ band }}
-        {% if forloop.last is False %} / {% endif %}
-        {% endfor %}</td>
-      <td>{{ live.open }}</td>
-      <td>{{ live.start }}</td>
-      <td>{{ live.door }}</td>
-      <td>{{ live.adv }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="jumbotron">
+  <h3 class="display-5">情報過多の日常を最適化しましょう.</h3>
+  <p class="lead">今日どのようなライブがあるか,好きなバンドのライブがいつなのか,</br>
+私達は文明の発展により情報を簡単に得ることができるようになりましたが,</br>
+皮肉にも欲しい情報を得るということはかえって困難になりつつあります.</br>
+なぜだかググってもツイッターを見ても全然見つからない.そんなあなたのためのサービスです.</p>
+  <hr class="my-2">
+  <p>こちらはDjangoフレームワークで作成しました.</p>
+  <p class="lead">
+    <form class="form-inline my-2 my-lg-0" action="{% url 'livecalendar:index' %}">
+      <button class="btn btn-lg btn-success my-2 my-sm-0" value="{% now "Y-m-d" %}" name="livedate" type="submit">本日のライブを確認 !</button>
+    </form>
+  </p>
+</div>
+
+{% for live in live_list %}
+<div class="card mb-5 shadow hvr-grow">
+  <h3 class="card-header">{{ live.date|date:"Y/m/d" }}</h3>
+  <div class="card-body">
+    <h4 class="card-title">{{ live.title }}</h4>
+    <table class="table table-borderless">
+      <tbody>
+        <tr>
+          <th scope="row">出演</th>
+          <td>
+            {% for band in live.band.all %}
+            {{ band }}
+            {% if forloop.last is False %} / {% endif %}
+            {% endfor %}</td>
+          </tr>
+          <tr>
+            <th scope="row">場所</th>
+            <td>{{ live.place }}</td>
+          </tr>
+          <tr>
+            <th scope="row">OPEN/START</th>
+            <td>{{ live.open }}/{{ live.start }}</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+</div>
+
+{% endfor %}
 
 {% include 'livecalendar/page.html' %}
 
