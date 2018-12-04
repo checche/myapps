@@ -11,6 +11,10 @@ from django.shortcuts import redirect
 from django.template.loader import get_template
 from .forms import LoginForm, UserCreateForm
 from .models import Band, Live
+import datetime
+import calendar
+from collections import deque
+import datetime
 
 User = get_user_model()
 
@@ -20,6 +24,7 @@ class LiveIndexView(generic.ListView):
 
     def get_queryset(self):
         queryset = Live.objects.order_by('date')
+        queryset=queryset.filter(date__gte = datetime.date.today())#本日以降のものだけ表示
         keyword = self.request.GET.get('keyword')
         livedate=self.request.GET.get('livedate')
         if livedate:
@@ -111,3 +116,76 @@ class UserCreateComplete(generic.TemplateView):
                     return super().get(request, **kwargs)
 
         return HttpResponseBadRequest()
+
+
+
+
+class BaseCalendarMixin:
+    """カレンダー関連Mixinの、基底クラス"""
+    first_weekday = 0  # 0は月曜から
+    week_names = ['月', '火', '水', '木', '金', '土', '日']
+
+    def setup(self):
+        self._calendar = calendar.Calendar(self.first_weekday)
+
+    def get_week_names(self):
+        return self.week_names
+
+
+class MonthCalendarMixin(BaseCalendarMixin):
+    """月間カレンダーの機能を提供するMixin"""
+
+    @staticmethod
+    def get_previous_month(date):
+        """前月を返す"""
+        if date.month == 1:
+            return date.replace(year=date.year-1, month=12, day=1)
+
+        else:
+            return date.replace(month=date.month-1, day=1)
+
+    @staticmethod
+    def get_next_month(date):
+        """次月を返す"""
+        if date.month == 12:
+            return date.replace(year=date.year+1, month=1, day=1)
+
+        else:
+            return date.replace(month=date.month+1, day=1)
+
+    def get_month_days(self, date):
+        """その月の全ての日を返す"""
+        return self._calendar.monthdatescalendar(date.year, date.month)
+
+    def get_current_month(self):
+        """現在の月を返す"""
+        month = self.kwargs.get('month')
+        year = self.kwargs.get('year')
+        if month and year:
+            month = datetime.date(year=int(year), month=int(month), day=1)
+        else:
+            month = datetime.date.today().replace(day=1)
+        return month
+
+    def get_month_calendar(self):
+        """月間カレンダー情報の入った辞書を返す"""
+        self.setup()
+        current_month = self.get_current_month()
+        calendar_data = {
+            'now': datetime.date.today(),
+            'days': self.get_month_days(current_month),
+            'current': current_month,
+            'previous': self.get_previous_month(current_month),
+            'next': self.get_next_month(current_month),
+            'week_names': self.get_week_names(),
+        }
+        return calendar_data
+
+class MonthCalendar(MonthCalendarMixin, generic.TemplateView):
+    """月間カレンダーを表示するビュー"""
+    template_name = 'livecalendar/month.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['month'] = self.get_month_calendar()
+        return context

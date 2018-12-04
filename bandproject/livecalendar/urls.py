@@ -10,4 +10,5 @@ urlpatterns=[
     path('signup/',views.UserCreate.as_view(),name='signup'),
     path('signup/done/',views.UserCreateDone.as_view(),name='signup_done'),
     path('signup/complete/<token>',views.UserCreateComplete.as_view(),name='signup_complete'),
+    path('calendar/<int:year>/<int:month>/', views.MonthCalendar.as_view(), name='calendar'),
 ]

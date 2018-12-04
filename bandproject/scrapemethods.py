@@ -5,8 +5,8 @@ import lxml
 import datetime
 
 #taget_urlのページ上のライブ情報をDFにして返す.ex)target_url ='http://osaka-zeela.jp/live.html?y=2018&m=11'
-def liveInfoBOT(target_url,Y):
-    place = '梅田Zeela'
+def liveInfoBOT(target_url,Y,p):
+    place = p
 
     df = pd.DataFrame(columns = ['Date', 'Place', 'Title', 'Band', 'Open', 'Start'])
 
@@ -24,8 +24,11 @@ def liveInfoBOT(target_url,Y):
         title = rows[0].p.string#タイトル
 
         """get bandlist"""
-        band = rows[2].strong.string#バンド名リストの文字列
-        bandlist = band.split(' / ')#リスト化
+        try:
+            band = rows[2].strong.string#バンド名リストの文字列
+            bandlist = band.split(' / ')#リスト化
+        except AttributeError:
+            bandlist=[]
 
         """get open/start"""
         rows[2].strong.extract()
@@ -34,7 +37,11 @@ def liveInfoBOT(target_url,Y):
         ostext = lines[5].strip().strip('OPEN/START').strip()
         os = ostext.split('/')
         stropen = os[0]#オープン時間
-        strstart = os[1]#スタート時間
+        try:
+            strstart = os[1]#スタート時間
+        except IndexError:
+            print("error:open,start couldn't be got")
+
         try:
             to = datetime.datetime.strptime(stropen, '%H:%M')
             ts = datetime.datetime.strptime(strstart, '%H:%M')

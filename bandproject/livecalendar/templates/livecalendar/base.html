@@ -24,7 +24,9 @@
           </li>
           {% if user.is_authenticated %}
           <li>
-            <a class="nav-item nav-link" href="#">お気に入り</a>
+            {% now "Y" as c_y %}
+            {% now "m" as c_m %}
+            <a class="nav-item nav-link" href="{% url 'livecalendar:calendar' c_y c_m %}">カレンダー</a>
           </li>
           <li>
             <a class="nav-item nav-link" href="{% url 'livecalendar:logout' %}">ログアウト</a>
@@ -67,7 +69,6 @@
               </p>
             </div>
           </div>
-
           {% endif %}
         </div>
         <div class="col-md-9">
@@ -75,9 +76,7 @@
         {% endblock %}
         </div>
       </div>
-
     </div>
-
 
 
     <!-- Optional JavaScript -->
