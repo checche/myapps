@@ -1,8 +1,8 @@
-# 私のライブ
+# タイトル 私のライブinfo
 Djangoフレームワークで作成しました.
 
 ##  環境
-Django 2.1.5
+Django 2.1.5  
 Python 3.6.8
 
 
@@ -15,15 +15,18 @@ Python 3.6.8
 6. ライブ詳細表示
 7. フォローしたバンドの一覧表示
 8. フォローしたバンドの出演するライブ一覧表示
-9. カレンダー→未実装(カレンダー上にライブ情報が出る予定)<br>
+9. カレンダー→未実装(カレンダー上にライブ情報が出る予定)
 
 ## 使い方
-
+    cd ./bandproject
     python manage.py runserver
 
 まずはユーザー登録してみましょう.
 
+## 今後
+カレンダー上でスケジュール管理やおすすめライブ表示をしたい.
+フォローボタンのUIが悪いのでそれを改善する.
 
 ## 参考文献
-Narito Blog https://narito.ninja/blog/
+Narito Blog https://narito.ninja/blog/  
 現場で使えるDjangoの教科書 横瀬 明仁
