@@ -1,12 +1,10 @@
 from django.db import models
 from django.core.mail import send_mail
-from django.contrib.auth.models import PermissionsMixin
-from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin,UserManager
+from django.contrib.auth.base_user import AbstractBaseUser,BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
-from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
-
 
 # Create your models here.
 class Band(models.Model):
@@ -38,6 +36,7 @@ class Live(models.Model):
     def __str__(self):
         return self.title
 
+"""emailを必須に"""
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
@@ -45,8 +44,10 @@ class UserManager(BaseUserManager):
         """
         Create and save a user with the given username, email, and password.
         """
-        if not username or not email:
-            raise ValueError('The given username or email must be set')
+        if not username:
+            raise ValueError('The given user ID must be set')
+        if not email:
+            raise ValueError('The given email must be set')
         email = self.normalize_email(email)
         username = self.model.normalize_username(username)
         user = self.model(username=username, email=email, **extra_fields)
@@ -54,7 +55,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, username, email, password=None, **extra_fields):
+    def create_user(self, username, email=None, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
         return self._create_user(username, email, password, **extra_fields)
@@ -71,29 +72,32 @@ class UserManager(BaseUserManager):
         return self._create_user(username, email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+"""表示名,お気に入り機能追加済みユーザー"""
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
-        _('username'),
-        max_length=150,
+        _('user ID'),
+        max_length=30,
         unique=True,
-        help_text=_('Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),
+        help_text=_('Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only.'),
         validators=[username_validator],
         error_messages={
-            'unique': _("A user with that username already exists."),
+            'unique': _("A user with that user Id already exists."),
         },
     )
 
+    screenname = models.CharField(_('username'),max_length=100,blank=True)
     email = models.EmailField(
         _('email address'),
         unique=True,
         error_messages={
-        'unique': _("A user with that email already exists."),
+            'unique': _("A user with that email already exists."),
         },
     )
-
-    favorite = models.ManyToManyField(Band,verbose_name='お気に入り', blank=True)
+    userimage = models.ImageField(_('icon'),upload_to='icons/',null=True,blank=True)
+    favorite_band = models.ManyToManyField(Band, verbose_name='好きなバンド', blank=True)
 
     is_staff = models.BooleanField(
         _('staff status'),
@@ -114,7 +118,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']#createsuperuserコマンドのときにemailを使う
+    REQUIRED_FIELDS = ['email']
 
     class Meta:
         verbose_name = _('user')
@@ -123,6 +127,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     def clean(self):
         super().clean()
         self.email = self.__class__.objects.normalize_email(self.email)
+
 
     def email_user(self, subject, message, from_email=None, **kwargs):
         """Send an email to this user."""

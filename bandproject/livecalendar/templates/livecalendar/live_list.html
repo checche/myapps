@@ -1,5 +1,24 @@
 {% extends 'livecalendar/base.html' %}
 
+
+{% block title %}ライブ情報{% endblock %}
+
+{% block css%}
+#livecard{
+  position: relative;
+  z-index: 1;
+}
+#livecard a {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-indent:-999px;
+    z-index: 2;
+}
+{% endblock %}
+
 {% block content %}
 <div class="card mb-5 shadow">
     <div class="card-header" role="tab" id="headingOne">
@@ -10,13 +29,17 @@
       </h5>
     </div>
 
-    <div id="collapseOne" class="collapse show" role="tabpanel" aria-labelledby="headingOne">
+    <div id="collapseOne" class="collapse" role="tabpanel" aria-labelledby="headingOne">
       <div class="card-body">
           <h3 class="display-5">情報過多の日常を最適化しましょう.</h3>
-          <p class="lead">今日どのようなライブがあるか,好きなバンドのライブがいつなのか,</br>
-        私達は文明の発展により多くの情報を簡単に得ることができるようになりましたが,</br>
-        皮肉にも欲しい情報を得るということはむしろ困難になりつつあります.</br>
-        なぜだかググってもツイッターを見ても全然見つからない.そんなあなたのためのサービスです.</p>
+          <p class="lead">機能一覧<br>
+          ナビバー上の検索欄→ライブ情報をバンド名またはライブハウス名で検索できます.<br>
+          バンド→バンド一覧.検索欄からバンド名を検索できる.<br>
+          カレンダー→未実装(カレンダー上にライブ情報が出る予定)<br>
+          バンドフォロー機能<br>
+          バンド詳細表示<br>
+          ライブ詳細表示<br>
+        </p>
           <hr class="my-2">
           <p>こちらはDjangoフレームワークで作成しました.</p>
           <p class="lead">
@@ -24,7 +47,6 @@
               <button class="btn btn-lg btn-success my-2 my-sm-0" value="{% now "Y-m-d" %}" name="livedate" type="submit">本日のライブを確認 !</button>
             </form>
           </p>
-
       </div>
     </div>
   </div>
@@ -33,7 +55,8 @@
 
 
 {% for live in live_list %}
-<div class="card mb-5 shadow hvr-grow">
+<div class="card mb-5 shadow hvr-grow" id="livecard">
+  <a href="{% url 'livecalendar:detail' live.pk %}"></a>
   <h3 class="card-header">{{ live.date|date:"Y/m/d" }}</h3>
   <div class="card-body">
     <h4 class="card-title">{{ live.title }}</h4>

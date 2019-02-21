@@ -1,0 +1,38 @@
+{% extends 'livecalendar/base.html' %}
+
+
+{% block title %}カレンダー{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'livecalendar:calendar' month.previous.year month.previous.month %}">&laquo;</a>
+{{ month.current | date:"Y/m" }}
+<a href="{% url 'livecalendar:calendar' month.next.year month.next.month %}">&raquo;</a>
+<table class="table">
+  <thead>
+    <tr>
+      {% for w in month.week_names %}
+        <th>{{ w }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for week in month.days %}
+      <tr>
+        {% for day in week %}
+          {% if month.now == day %}
+            <td class="table-success">
+          {% else %}
+            <td>
+          {% endif %}
+          {% if month.current.month != day.month %}
+          {% else %}
+            {{ day.day }}
+          {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

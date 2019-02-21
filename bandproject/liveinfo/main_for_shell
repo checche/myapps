@@ -1,0 +1,14 @@
+#shellでコピペ実行するための
+
+
+from liveinfo.scrapemethods import *;import pandas as pd;from livecalendar.models import Live, Band, Place;import datetime;import pickle;import sys
+
+sys.setrecursionlimit(100000)
+
+
+df = pd.read_pickle('./liveinfo/zeela.pkl')
+
+for date, place, title, bandlist, open, start in zip(df['Date'], df['Place'], df['Title'], df['Band'], df['Open'], df['Start']):
+L = Live.objects.get_or_create(date=date, place=Place.objects.get_or_create(name=place)[0], title=title, open=open, start=start)[0]
+for bname in bandlist:
+L.band.add(Band.objects.get_or_create(name=bname)[0])

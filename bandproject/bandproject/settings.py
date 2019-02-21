@@ -120,9 +120,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
-AUTH_USER_MODEL = 'livecalendar.User'
+AUTH_USER_MODEL = 'livecalendar.CustomUser'
 LOGIN_URL = 'livecalendar:login'
 LOGIN_REDIRECT_URL = 'livecalendar:index'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 # メールをコンソールに表示する
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -1,0 +1,28 @@
+{% extends 'livecalendar/base.html'%}
+
+{% block title %}バンド検索{% endblock %}
+
+{% block content%}
+
+<form class="form-inline my-2 my-lg-0" action="{% url 'livecalendar:band_list' %}">
+  <input class="form-control mr-sm-2" type="text" placeholder="Search" aria-label="Search" name="keyword">
+  <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+</form>
+
+<ul class="list-group">
+  {% for band in band_list %}
+  <li id="bandlist" class="hvr-grow list-group-item d-flex justify-content-between align-items-center">
+    <a href="{% url 'livecalendar:band_detail' band.pk %}">{{ band }}</a>
+    {%if request.path == '/band/'%}
+    <form action="{% url 'livecalendar:follow' band.pk %}" method="post">
+      <button class="btn btn-outline-info" type="submit" name="button">フォロー</button>
+      {% csrf_token %}
+    </form>
+    {% endif %}
+    {% endfor %}
+  </li>
+</ul>
+
+{% include 'livecalendar/page.html' %}
+
+{% endblock %}

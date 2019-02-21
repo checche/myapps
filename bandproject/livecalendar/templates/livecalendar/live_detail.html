@@ -1,0 +1,37 @@
+{% extends 'livecalendar/base.html' %}
+
+{% block title %}{{live.title}}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h3 class="card-header">ライブ詳細</h3>
+  <div class="card-body">
+    <h4 class="card-title">{{ live.title }}</h4>
+    <table class="table table-borderless">
+      <tbody>
+        <tr>
+          <th scope="row">出演</th>
+          <td>
+            {% for band in live.band.all %}
+            <a href="{% url 'livecalendar:band_detail' band.pk %}">{{ band }}</a>
+            {% if forloop.last is False %} / {% endif %}
+            {% endfor %}</td>
+          </tr>
+          <tr>
+            <th scope="row">場所</th>
+            <td>{{ live.place }}</td>
+          </tr>
+          <tr>
+            <th scope="row">OPEN / START</th>
+            <td>{{ live.open }} / {{ live.start }}</td>
+          </tr>
+          <tr>
+            <th scope="row">DOOR / ADV</th>
+            <td>{{ live.door }} / {{ live.adv }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+  </div>
+</div>
+{% endblock %}

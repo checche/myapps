@@ -2,34 +2,44 @@
 <!doctype html>
 <html lang="ja">
   <head>
-    <title>私のライブカレンダー</title>
+    <title>{% block title %}{% endblock %}</title>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-
+    <style>{% block css %}{% endblock %}</style>
     <link rel="stylesheet" href="{% static 'livecalendar/hira.css' %}">
   </head>
   <body>
    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#">私のライブカレンダー</a>
+      <a class="navbar-brand" href="#">私のライブ</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
+          <li {%if request.path == '/'%}class="nav-item active"{% endif %}>
             <a class="nav-link" href="{% url 'livecalendar:index' %}">Home</a>
           </li>
           {% if user.is_authenticated %}
+
+          <li {%if request.path == '/band/'%}class="nav-item active"{% endif %}>
+            <a class="nav-item nav-link" href="{% url 'livecalendar:band_list' %}">バンド</a>
+          </li>
+          <li {%if request.path == '/mylive/'%}class="nav-item active"{% endif %}>
+            <a class="nav-item nav-link" href="{% url 'livecalendar:follow_live' %}">マイライブ</a>
+          </li>
+          <li {%if request.path == '/myband/'%}class="nav-item active"{% endif %}>
+            <a class="nav-item nav-link" href="{% url 'livecalendar:follow_band' %}">マイバンド</a>
+          </li>
+          <li>
+            <a class="nav-item nav-link" href="{% url 'livecalendar:logout' %}">ログアウト</a>
+          </li>
           <li>
             {% now "Y" as c_y %}
             {% now "m" as c_m %}
             <a class="nav-item nav-link" href="{% url 'livecalendar:calendar' c_y c_m %}">カレンダー</a>
-          </li>
-          <li>
-            <a class="nav-item nav-link" href="{% url 'livecalendar:logout' %}">ログアウト</a>
           </li>
           {% else %}
           <li class="nav-item">
@@ -49,24 +59,28 @@
         <div class="col-md-3">
           {% if user.is_authenticated %}
           <div class="card">
+            {% if user.userimage %}
+            <img class="card-img-top" src="{{ user.userimage.url }}" alt="{{ user.username }}">
+            {% else %}
+            <img class="card-img-top" src="{% static 'livecalendar/noimage.png' %}" alt="No image">
+            {% endif %}
             <div class="card-body">
-              <h4 class="card-title">{{ user.username }}</h4>
-              <h6 class="card-subtitle mb-2 text-muted">{{ user.email}}</h6>
+              <h4 class="card-title">{{ user.screenname }}</h4>
+              <h6 class="card-subtitle mb-2 text-muted">{{ user.username}}</h6>
               <p class="card-text">
-                ライブカレンダーが表示されます.ライブカレンダーが表示されます.ライブカレンダーが表示されます.
-                ライブカレンダーが表示されます.ライブカレンダーが表示されます.ライブカレンダーが表示されます.
+                お気に入りバンド数 {{ user.favorite_band.count }}
               </p>
+              <a href="{% url 'livecalendar:edit' user.pk %}" class="btn btn-info">編集</a>
             </div>
           </div>
           {% else %}
           <div class="card">
             <div class="card-body">
-              <h4 class="card-title">まずはログイン</h4>
-              <h6 class="card-subtitle mb-2 text-muted">してみましょう</h6>
-              <a class="card-link" href="{% url 'livecalendar:login' %}">ログイン</a>
+              <h4 class="card-title">ようこそ</h4>
               <p class="card-text">
                 ログインしてみましょう
               </p>
+              <a class="btn btn-success" href="{% url 'livecalendar:login' %}">ログイン</a>
             </div>
           </div>
           {% endif %}

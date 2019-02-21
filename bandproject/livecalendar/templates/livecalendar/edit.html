@@ -1,0 +1,41 @@
+{% extends 'livecalendar/base.html' %}
+
+
+{% block title %}ユーザー情報{% endblock %}
+
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h3>ユーザー情報</h3>
+  </div>
+  <div class="card-body">
+    <form method="POST" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="{{ form.screenname.id_for_label }}">{{ form.screenname.label_tag }}</label>
+        {{form.screenname}}
+        {{form.screenname.errors}}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.userimage.id_for_label }}">{{ form.userimage.label_tag }}</label>
+        {{form.userimage}}
+        {{form.userimage.errors}}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.username.id_for_label }}">{{ form.username.label_tag }}</label>
+        {{form.username}}
+        {{form.username.errors}}
+      </div>
+      <div class="form-group">
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label_tag }}</label>
+        {{form.email}}
+        {{form.email.errors}}
+      </div>
+      {% csrf_token %}
+      <button type="submit" class="float-lg-right btn btn-success">更新</button>
+    </form>
+  </div>
+</div>
+
+
+{% endblock %}

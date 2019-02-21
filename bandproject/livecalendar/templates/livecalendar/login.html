@@ -1,4 +1,7 @@
 {% extends "livecalendar/base.html" %}
+
+{% block title %}サインイン{% endblock %}
+
 {% block content %}
 <form action="" method="POST">
     <div class="mt-5 col-md-6 offset-md-3">
@@ -10,11 +13,11 @@
                     {{ field.errors }}
                     <hr>
                 {% endfor %}
-                <button type="submit" class="btn btn-success btn-lg btn-block" >ログイン</button>
+                <button type="submit" class="btn btn-success btn-lg btn-block" >サインイン</button>
                 <input type="hidden" name="next" value="{{ next }}" />
                 {% csrf_token %}
                 <a href="{% url 'livecalendar:signup' %}" class="mt-3 btn btn-info btn-lg btn-block" >アカウント作成</a>
-            </div>
+              </div>
         </div>
     </div>
 </form>

@@ -1,16 +1,16 @@
 from django.views import generic
 from django.db.models import Q
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.signing import BadSignature, SignatureExpired, loads, dumps
 from django.http import Http404, HttpResponseBadRequest
-from django.shortcuts import redirect
+from django.shortcuts import redirect, resolve_url, get_object_or_404
 from django.template.loader import get_template
-from .forms import LoginForm, UserCreateForm
-from .models import Band, Live
+from .forms import *
+from .models import Band, Live, CustomUser
 import datetime
 import calendar
 from collections import deque
@@ -18,9 +18,10 @@ import datetime
 
 User = get_user_model()
 
+
 class LiveIndexView(generic.ListView):
     model = Live
-    paginate_by = 20
+    paginate_by = 5
 
     def get_queryset(self):
         queryset = Live.objects.order_by('date')
@@ -33,40 +34,82 @@ class LiveIndexView(generic.ListView):
             queryset=queryset.filter(Q(band__name__icontains=keyword)|Q(place__name__icontains=keyword))
         return queryset
 
+class LiveDetailView(generic.DetailView):
+    model = Live
 
-class Login(LoginView):
-    """ログインページ"""
-    #forms.pyのどのクラスをを使うか
+class BandListView(generic.ListView):
+    model = Band
+    paginate_by = 10
+
+    def get_queryset(self):
+        keyword = self.request.GET.get('keyword')
+        queryset = Band.objects.all()
+        if keyword:
+            queryset=queryset.filter(name__icontains=keyword)
+        return queryset
+
+class BandDetailView(generic.DetailView):
+    model = Band
+    def get_context_data(self, **kwargs):
+        pk = self.kwargs.get(self.pk_url_kwarg)
+        b=Band.objects.get(pk=pk)
+        context = {}
+        context['follower'] = CustomUser.objects.filter(favorite_band__pk=pk).count()
+        context['lives'] = Live.objects.filter(band__pk=pk)
+        return super().get_context_data(**context)
+
+"""フォロー関係"""
+
+class FollowLiveView(generic.ListView):
+    model = Live
+    paginate_by = 5
+    def get_queryset(self):
+        """フォローしてるバンドのライブを表示"""
+        user=self.request.user
+        queryset = Live.objects.order_by('date')
+        queryset=queryset.filter(date__gte = datetime.date.today())#本日以降のものだけ表示
+        queryset=queryset.filter(band__in=user.favorite_band.all())
+        return queryset
+
+def followBand(request, pk):
+    """バンドをフォローする"""
+    band = get_object_or_404(Band, pk=pk)
+    request.user.favorite_band.add(band)
+    return redirect('livecalendar:band_list')
+
+class FollowBandView(generic.ListView):
+    model = Band
+    paginate_by = 10
+    def get_queryset(self):
+        user=self.request.user
+        queryset = user.favorite_band.all()
+        return queryset
+
+
+"""ユーザー管理関係"""
+
+class LoginView(LoginView):
     form_class = LoginForm
     template_name = 'livecalendar/login.html'
-    redirect_authenticated_user=True
+    redirect_authenticated_user = True
 
-class Logout(LoginRequiredMixin, LogoutView):
-    """ログアウトページ"""
-    template_name = 'livecalendar/live_list.html'
+class LogoutView(LoginRequiredMixin, LogoutView):
+    template_name = 'livecalendar/logged_out.html'
 
-class UserCreate(generic.CreateView):
-    """ユーザー仮登録"""
+class Register(generic.CreateView):
     template_name = 'livecalendar/signup.html'
-    form_class = UserCreateForm
+    form_class = RegisterForm
 
     def form_valid(self, form):
-        """仮登録と本登録用メールの発行."""
-        # 仮登録と本登録の切り替えは、is_active属性を使うと簡単です。
-        # 退会処理も、is_activeをFalseにするだけにしておくと捗ります。
+        """バリデーションOKのときに行う動作"""
         user = form.save(commit=False)
         user.is_active = False
         user.save()
 
-        # アクティベーションURLの送付
         current_site = get_current_site(self.request)
         domain = current_site.domain
-        context = {
-            'protocol': 'https' if self.request.is_secure() else 'http',
-            'domain': domain,
-            'token': dumps(user.pk),
-            'user': user,
-        }
+        context = {'protocol': self.request.scheme,'domain': domain,'token': dumps(user.pk),'user': user}
+        """{{ protocol }}://{{ domain }}{% url 'livecalendar:signup_complete' token %}という認証URLを送る"""
 
         subject_template = get_template('livecalendar/mail_template/signup/subject.txt')
         subject = subject_template.render(context)
@@ -77,32 +120,24 @@ class UserCreate(generic.CreateView):
         user.email_user(subject, message)
         return redirect('livecalendar:signup_done')
 
+class RegisterDone(generic.TemplateView):
+    template_name='livecalendar/signup_done.html'
 
-class UserCreateDone(generic.TemplateView):
-    """ユーザー仮登録完了"""
-    template_name = 'livecalendar/signup_done.html'
-
-
-class UserCreateComplete(generic.TemplateView):
-    """メール内URLアクセス後のユーザー本登録"""
+class RegisterComplete(generic.TemplateView):
     template_name = 'livecalendar/signup_complete.html'
-    timeout_seconds = getattr(settings, 'ACTIVATION_TIMEOUT_SECONDS', 60*60*24)  # デフォルトでは1日以内
+    timeout_seconds = getattr(settings, 'ACTIVATION_TIMEOUT_SECONDS', 60*60*24)
 
-    def get(self, request, **kwargs):
-        """tokenが正しければ本登録."""
+    def get(self,request, **kwargs):
+        """getしたときの処理"""
         token = kwargs.get('token')
         try:
             user_pk = loads(token, max_age=self.timeout_seconds)
 
-        # 期限切れ
         except SignatureExpired:
             return HttpResponseBadRequest()
-
-        # tokenが間違っている
         except BadSignature:
             return HttpResponseBadRequest()
 
-        # tokenは問題なし
         else:
             try:
                 user = User.objects.get(pk=user_pk)
@@ -110,7 +145,6 @@ class UserCreateComplete(generic.TemplateView):
                 return HttpResponseBadRequest()
             else:
                 if not user.is_active:
-                    # 問題なければ本登録とする
                     user.is_active = True
                     user.save()
                     return super().get(request, **kwargs)
@@ -118,7 +152,24 @@ class UserCreateComplete(generic.TemplateView):
         return HttpResponseBadRequest()
 
 
+class UserpassMixin(UserPassesTestMixin):
+    raise_exception = True
+    def test_func(self):
+        """条件書く"""
+        user = self.request.user
+        return user.pk == self.kwargs['pk'] or user.is_superuser
 
+class EditUserInfo(UserpassMixin, generic.UpdateView):
+    form_class = UserEditForm
+    model = CustomUser
+    template_name = 'livecalendar/edit.html'
+
+    def get_success_url(self):
+        return resolve_url('livecalendar:edit', pk=self.kwargs['pk'])
+
+
+
+"""カレンダー関係"""
 
 class BaseCalendarMixin:
     """カレンダー関連Mixinの、基底クラス"""
@@ -183,7 +234,7 @@ class MonthCalendarMixin(BaseCalendarMixin):
 
 class MonthCalendar(MonthCalendarMixin, generic.TemplateView):
     """月間カレンダーを表示するビュー"""
-    template_name = 'livecalendar/month.html'
+    template_name = 'livecalendar/calendar.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

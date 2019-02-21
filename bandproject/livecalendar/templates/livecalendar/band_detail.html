@@ -1,0 +1,66 @@
+{% extends 'livecalendar/base.html' %}
+{% block title %}{{band.name}}{% endblock %}
+{% block css%}
+#livecard{
+  position: relative;
+  z-index: 1;
+}
+#livecard a {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    text-indent:-999px;
+    z-index: 2;
+}
+{% endblock %}
+{% block content %}
+<div class="card mb-5 shadow hvr-grow">
+  <h3 class="card-header">{{ band.name }}</h3>
+  <div class="card-body">
+    <table class="table table-borderless">
+      <tbody>
+        <tr>
+          <th scope="row">フォロワー</th>
+          <td>{{ follower }}</td>
+        </tr>
+        </tbody>
+      </table>
+      <form action="{% url 'livecalendar:follow' band.pk %}" method="post">
+        <button class="btn btn-outline-info" type="submit" name="button">フォロー</button>
+        {% csrf_token %}
+      </form>
+  </div>
+</div>
+<h4>ライブ情報</h4>
+{% for live in lives %}
+<div class="card mb-5 shadow hvr-grow" id="livecard">
+  <a href="{% url 'livecalendar:detail' live.pk %}"></a>
+  <h3 class="card-header">{{ live.date|date:"Y/m/d" }}</h3>
+  <div class="card-body">
+    <h4 class="card-title">{{ live.title }}</h4>
+    <table class="table table-borderless">
+      <tbody>
+        <tr>
+          <th scope="row">出演</th>
+          <td>
+            {% for band in live.band.all %}
+            {{ band }}
+            {% if forloop.last is False %} / {% endif %}
+            {% endfor %}</td>
+          </tr>
+          <tr>
+            <th scope="row">場所</th>
+            <td>{{ live.place }}</td>
+          </tr>
+          <tr>
+            <th scope="row">OPEN / START</th>
+            <td>{{ live.open }} / {{ live.start }}</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
